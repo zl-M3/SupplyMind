@@ -1,0 +1,731 @@
+/* ============================================================
+   右下角 AI 小助手悬浮球 + 对话面板
+   ============================================================ */
+
+/* ---------------- 悬浮角色 ---------------- */
+
+.sm-bot-fab {
+  position: fixed;
+  right: 18px;
+  bottom: 8px;
+  z-index: 1200;
+  width: 88px;
+  height: 126px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: grab;
+  display: grid;
+  place-items: end center;
+  -webkit-tap-highlight-color: transparent;
+  /* 拖动时需要：不触发页面滚动 / 不选中文字 */
+  touch-action: none;
+  user-select: none;
+}
+
+.sm-bot-fab:active {
+  cursor: grabbing;
+}
+
+.sm-bot-img {
+  position: relative;
+  z-index: 2;
+  width: 88px;
+  max-height: 118px;
+  height: auto;
+  object-fit: contain;
+  object-position: bottom center;
+  transform-origin: 50% 92%;
+  animation: sm-bot-bob 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  filter: drop-shadow(0 10px 16px rgba(150, 100, 60, 0.22));
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* 闲置上下浮动 + 轻微摇摆，像在招手 */
+@keyframes sm-bot-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(2.5deg);
+  }
+}
+
+.sm-bot-fab:hover .sm-bot-img {
+  animation-play-state: paused;
+  transform: translateY(-6px) scale(1.06) rotate(-4deg);
+}
+
+.sm-bot-fab:active .sm-bot-img {
+  transform: translateY(-2px) scale(0.97);
+}
+
+/* 地面阴影：随浮动缩放，增强"悬空"感 */
+.sm-bot-ground {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 54px;
+  height: 9px;
+  margin-left: -27px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(150, 100, 60, 0.28), transparent 70%);
+  filter: blur(2px);
+  animation: sm-bot-ground 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  z-index: 1;
+}
+
+@keyframes sm-bot-ground {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(0.82);
+    opacity: 0.45;
+  }
+}
+
+/* 呼吸光环 */
+.sm-bot-ring {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 76px;
+  height: 76px;
+  margin-left: -38px;
+  border-radius: 50%;
+  border: 2px solid rgba(242, 101, 34, 0.5);
+  animation: sm-bot-pulse 2.6s ease-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sm-bot-ring--delay {
+  animation-delay: 1.3s;
+}
+
+@keyframes sm-bot-pulse {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.65;
+  }
+  70% {
+    opacity: 0.12;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+/* 右上角小徽标 */
+.sm-bot-badge {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  z-index: 3;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: #fff;
+  background: linear-gradient(135deg, #ff9350, #f26522);
+  box-shadow: 0 4px 10px rgba(242, 101, 34, 0.4);
+}
+
+/* 展开时角色缩小退后 */
+.sm-bot-fab--open .sm-bot-img {
+  transform: scale(0.86) translateY(2px);
+  animation-play-state: paused;
+}
+
+/* ---------------- 气泡提示 ---------------- */
+
+.sm-bot-bubble {
+  position: fixed;
+  right: 118px;
+  bottom: 62px;
+  z-index: 1200;
+  max-width: 190px;
+  padding: 9px 13px;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--sm-ink);
+  font-size: 12.5px;
+  line-height: 1.5;
+  border: 1px solid var(--sm-border);
+  box-shadow: 0 10px 24px rgba(150, 100, 60, 0.14);
+  animation: sm-bot-bubble-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sm-bot-bubble-tail {
+  position: absolute;
+  right: -5px;
+  bottom: 14px;
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border-right: 1px solid var(--sm-border);
+  border-bottom: 1px solid var(--sm-border);
+  transform: rotate(-45deg);
+}
+
+@keyframes sm-bot-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* ---------------- 对话面板 ---------------- */
+
+.sm-bot-panel {
+  position: fixed;
+  right: 20px;
+  bottom: 146px;
+  z-index: 1210;
+  width: 400px;
+  height: min(620px, calc(100vh - 180px));
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--sm-border);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(120, 80, 40, 0.22);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(14px) scale(0.96);
+  transform-origin: bottom right;
+  pointer-events: none;
+  transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sm-bot-panel--open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.sm-bot-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: linear-gradient(120deg, #fff6ec, #ffe9d6);
+  border-bottom: 1px solid var(--sm-border);
+}
+
+.sm-bot-head-avatar {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  flex: none;
+}
+
+.sm-bot-head-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.sm-bot-head-text strong {
+  font-size: 13.5px;
+  color: var(--sm-ink);
+}
+
+.sm-bot-head-text span {
+  font-size: 11.5px;
+  color: var(--sm-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sm-bot-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
+}
+
+.sm-bot-dot--off {
+  background: #d1c7bb;
+  box-shadow: 0 0 0 3px rgba(180, 165, 145, 0.18);
+}
+
+.sm-bot-head-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--sm-ink-2);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  cursor: pointer;
+  flex: none;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.sm-bot-head-btn:hover {
+  background: #fff;
+  color: var(--sm-primary);
+}
+
+.sm-bot-body {
+  flex: 1;
+  min-height: 0;
+  background: #fff;
+}
+
+.sm-bot-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* ---------------- 响应式与动效偏好 ---------------- */
+
+@media (max-width: 560px) {
+  .sm-bot-panel {
+    right: 10px;
+    left: 10px;
+    width: auto;
+    bottom: 128px;
+    height: min(68vh, 560px);
+  }
+
+  .sm-bot-fab {
+    right: 8px;
+    width: 78px;
+    height: 92px;
+  }
+
+  .sm-bot-img {
+    width: 78px;
+  }
+
+  .sm-bot-bubble {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sm-bot-img,
+  .sm-bot-ground,
+  .sm-bot-ring,
+  .sm-bot-bubble {
+    animation: none !important;
+  }
+
+  .sm-bot-panel {
+    transition: none;
+  }
+}
+
+
+/* ---------------- 探测中骨架 ---------------- */
+
+.sm-bot-loading {
+  position: absolute;
+  inset: 56px 0 0 0;
+  background: linear-gradient(100deg, #fffaf5 30%, #fff3e6 50%, #fffaf5 70%);
+  background-size: 200% 100%;
+  animation: sm-bot-skeleton 1.3s ease-in-out infinite;
+}
+
+@keyframes sm-bot-skeleton {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+/* ---------------- 加载失败兜底 ---------------- */
+
+.sm-bot-fallback {
+  position: absolute;
+  inset: 56px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px;
+  text-align: center;
+  background: #fffdfa;
+}
+
+.sm-bot-fallback-icon {
+  font-size: 34px;
+  color: var(--sm-primary);
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+
+.sm-bot-fallback p {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--sm-ink);
+}
+
+.sm-bot-fallback small {
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--sm-muted);
+  max-width: 260px;
+}
+
+.sm-bot-fallback small code {
+  font-size: 11px;
+  background: #fff3e6;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.sm-bot-fallback-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.sm-bot-fallback-actions button,
+.sm-bot-fallback-actions a {
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 6px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--sm-border);
+  background: #fff;
+  color: var(--sm-ink-2);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.sm-bot-fallback-actions button:hover {
+  border-color: var(--sm-primary);
+  color: var(--sm-primary);
+}
+
+.sm-bot-fallback-actions a {
+  background: linear-gradient(135deg, #ff9350, #f26522);
+  border-color: transparent;
+  color: #fff;
+}
+
+
+/* ---------------- 原生聊天界面 ---------------- */
+
+.sm-bot-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: linear-gradient(180deg, #fffdfa, #fff);
+}
+
+.sm-bot-msgs {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 14px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sm-bot-welcome {
+  margin: auto;
+  text-align: center;
+  padding: 10px;
+}
+
+.sm-bot-welcome img {
+  width: 96px;
+  height: auto;
+  animation: sm-bot-bob 3.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.sm-bot-welcome p {
+  margin: 6px 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sm-ink);
+}
+
+.sm-bot-welcome small {
+  font-size: 12px;
+  color: var(--sm-muted);
+}
+
+.sm-bot-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.sm-bot-quick button {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--sm-border);
+  background: #fff;
+  color: var(--sm-ink-2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sm-bot-quick button:hover {
+  border-color: var(--sm-primary);
+  color: var(--sm-primary);
+  background: var(--sm-primary-soft);
+}
+
+.sm-bot-msg {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.sm-bot-msg--user {
+  flex-direction: row-reverse;
+}
+
+.sm-bot-msg-avatar {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  flex: none;
+  margin-top: 2px;
+}
+
+.sm-bot-bubble-msg {
+  max-width: 78%;
+  padding: 9px 12px;
+  border-radius: 13px;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #fff;
+  border: 1px solid var(--sm-border);
+  color: var(--sm-ink);
+  box-shadow: 0 1px 2px rgba(120, 80, 40, 0.04);
+}
+
+.sm-bot-msg--user .sm-bot-bubble-msg {
+  background: linear-gradient(135deg, #ff9350, #f26522);
+  border-color: transparent;
+  color: #fff;
+}
+
+.sm-bot-bubble-msg--err {
+  background: var(--sm-red-soft);
+  border-color: #ffd6cf;
+  color: #b4271a;
+}
+
+/* 输入中动画 */
+.sm-bot-typing {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #fffdf9;
+}
+
+.sm-bot-typing span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f2a173;
+  animation: sm-bot-typing 1.2s ease-in-out infinite;
+}
+
+.sm-bot-typing-text {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--sm-muted-2);
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.sm-bot-typing span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.sm-bot-typing span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+@keyframes sm-bot-typing {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+/* 输入区 */
+.sm-bot-input {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px 12px 6px;
+  border-top: 1px solid var(--sm-border);
+  background: #fff;
+}
+
+.sm-bot-input textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--sm-border);
+  border-radius: 10px;
+  padding: 9px 11px;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  max-height: 84px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.sm-bot-input textarea:focus {
+  border-color: var(--sm-primary);
+  box-shadow: 0 0 0 3px rgba(242, 101, 34, 0.1);
+}
+
+/* 上传资料 */
+.sm-bot-attach-btn {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  margin-bottom: 1px;
+  border: 1px solid var(--sm-border);
+  border-radius: 10px;
+  background: #fffdf9;
+  color: #b98a63;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sm-bot-attach-btn:hover:not(:disabled) {
+  border-color: var(--sm-primary);
+  color: var(--sm-primary);
+}
+
+.sm-bot-attach-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sm-bot-attach {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 12px 0;
+  padding: 6px 10px;
+  border: 1px dashed #f3c9a8;
+  border-radius: 10px;
+  background: #fff8f1;
+  font-size: 12px;
+  color: #8a5a34;
+}
+
+.sm-bot-attach-name {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.sm-bot-attach-meta {
+  color: #b08f74;
+}
+
+.sm-bot-attach-remove {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: #b08f74;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.sm-bot-attach-remove:hover {
+  color: #d4380d;
+}
+
+.sm-bot-msg-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  font-size: 11.5px;
+  opacity: 0.9;
+}
+
+.sm-bot-send {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ff9350, #f26522);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 6px 14px rgba(242, 101, 34, 0.28);
+}
+
+.sm-bot-send:disabled {
+  background: #e8ded3;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.sm-bot-hint {
+  flex: none;
+  padding: 0 14px 9px;
+  font-size: 11px;
+  color: var(--sm-muted-2);
+  background: #fff;
+  text-align: right;
+}

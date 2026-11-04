@@ -1,0 +1,55 @@
+# ===== Python / 后端 =====
+__pycache__/
+*.py[cod]
+*.so
+.Python
+build/
+*.egg-info/
+.eggs/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# 环境变量（含数据库密码，不要提交）
+.env
+.env.local
+.env.*.local
+
+# 数据库本地文件
+*.db
+*.sqlite
+*.sqlite3
+backend/app/data/*.db
+
+# 日志与缓存
+*.log
+logs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+pytest-cache-files-*/
+*.tmp
+*.bak
+
+# ===== Node / 前端 =====
+node_modules/
+dist/
+.vite/
+.tmp/
+.shots/
+*.local
+
+# ===== IDE / 系统 =====
+# .idea 是否提交看团队约定：这里保留项目级配置，只忽略个人本地文件
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/shelf/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+~$*

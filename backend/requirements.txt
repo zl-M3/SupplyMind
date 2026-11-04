@@ -1,0 +1,23 @@
+# SupplyMind 后端依赖
+# 安装: pip install -r requirements.txt
+
+# Web 框架
+fastapi==0.143.0
+uvicorn[standard]==0.40.0
+
+# 数据层
+SQLAlchemy==2.0.51
+PyMySQL==1.2.3
+
+# 配置与校验
+pydantic==2.13.4
+pydantic-settings==2.14.2
+email-validator==2.3.0
+
+# 认证
+PyJWT==2.13.0
+bcrypt==5.0.0
+
+# AI（OpenAI 兼容协议，可对接 DeepSeek / 通义 / OpenAI）
+openai==3.19.2
+httpx==0.28.1

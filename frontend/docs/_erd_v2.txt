@@ -1,0 +1,231 @@
+实体数: 17   关系数: 23
+========================================================================
+
+###### 分组: 商品与库存
+
+【products】商品 SKU · products  字段 10
+   PK   id                           varchar(16) 商品ID
+   UK   code                         varchar(32) 商品编码
+        name                         varchar(120) 商品名称
+        category                     varchar(40) 所属分类
+        spec                         varchar(80) 规格型号
+        unit                         varchar(16) 计量单位
+        safety_stock                 int 安全库存
+        purchase_price               numeric(12,2) 采购单价
+        status                       varchar(16) 商品状态
+        created_at                   timestamptz 创建时间
+
+【warehouses】仓库 · warehouses  字段 8
+   PK   id                           varchar(16) 仓库ID
+   UK   code                         varchar(16) 仓库编码
+        name                         varchar(80) 仓库名称
+        address                      varchar(200) 仓库地址
+        manager                      varchar(40) 负责人
+        phone                        varchar(32) 联系电话
+        status                       varchar(16) 仓库状态
+        created_at                   timestamptz 创建时间
+
+【warehouse_stock】库存结存 · warehouse_stock  字段 5
+   PK   id                           
+   FK   product_id                   varchar(16) 商品ID
+   FK   warehouse_id                 varchar(16) 仓库ID
+        qty                          int 现存数量
+        updated_at                   timestamptz 更新时间
+
+【inventory_transactions】库存流水 · inventory_transactions  字段 13
+   PK   id                           varchar(24) 流水ID
+        type                         varchar(16) 流水类型
+   FK   product_id                   varchar(16) 商品ID
+        product_name                 varchar(120) 商品名称
+   FK   warehouse_id                 varchar(16) 仓库ID
+        warehouse_name               varchar(80) 仓库名称
+        qty                          int 变动数量
+        before_qty                   int 变动前
+        after_qty                    int 变动后
+        ref_code                     varchar(32) 关联单号
+        operator                     varchar(40) 经办人
+        remark                       varchar(200) 备注
+        created_at                   timestamptz 记账时间
+
+【stock_transfers】库存调拨单 · stock_transfers  字段 12
+   PK   id                           varchar(16) 调拨ID
+   UK   code                         varchar(32) 调拨单号
+   FK   from_warehouse_id            varchar(16) 调出仓库
+        from_warehouse_name          varchar(80) 调出仓名
+   FK   to_warehouse_id              varchar(16) 调入仓库
+        to_warehouse_name            varchar(80) 调入仓名
+   FK   product_id                   varchar(16) 商品ID
+        product_name                 varchar(120) 商品名称
+        qty                          int 调拨数量
+        operator                     varchar(40) 经办人
+        remark                       varchar(200) 备注
+        created_at                   timestamptz 创建时间
+
+###### 分组: 采购与物流
+
+【suppliers】供应商 · suppliers  字段 10
+   PK   id                           varchar(16) 供应商ID
+   UK   code                         varchar(32) 供应商编码
+   UK   name                         varchar(120) 供应商名称
+        contact                      varchar(40) 联系人
+        phone                        varchar(32) 联系电话
+        categories                   jsonb 供货品类
+        address                      varchar(200) 联系地址
+        status                       varchar(16) 供应商状态
+        remark                       varchar(500) 备注
+        created_at                   timestamptz 创建时间
+
+【purchase_orders】采购订单 · purchase_orders  字段 16
+   PK   id                           varchar(32) 采购单ID
+   UK   code                         varchar(32) 采购单号
+   FK   supplier_id                  varchar(16) 供应商ID
+        supplier_name                varchar(120) 供应商名
+        status                       varchar(16) 单据状态
+        total_amount                 numeric(14,2) 订单金额
+   FK   created_by                   varchar(16) 创建人ID
+        created_by_name              varchar(50) 创建人
+        created_at                   timestamptz 创建时间
+        expected_arrival             date 预计到货
+   FK   approver_id                  varchar(16) 审批人ID
+        approver_name                varchar(50) 审批人
+        approved_at                  timestamptz 审批时间
+        reject_reason                varchar(500) 驳回原因
+        remark                       varchar(500) 备注
+        logistics_id                 varchar(32) 关联物流单
+
+【purchase_order_items】采购订单明细 · purchase_order_items  字段 10
+   PK   id                           varchar(32) 明细ID
+   FK   po_id                        varchar(32) 采购单ID
+   FK   product_id                   varchar(16) 商品ID
+        product_name                 varchar(120) 商品名称
+        spec                         varchar(80) 规格型号
+        unit                         varchar(16) 计量单位
+        qty                          int 采购数量
+        received_qty                 int 已收数量
+        price                        numeric(12,2) 成交单价
+        amount                       numeric(14,2) 行小计
+
+【logistics_orders】物流单 · logistics_orders  字段 12
+   PK   id                           varchar(16) 物流单ID
+   UK   code                         varchar(32) 物流单号
+   FK   po_id                        varchar(32) 采购单ID
+        po_code                      varchar(32) 采购单号
+   FK   supplier_id                  varchar(16) 供应商ID
+        supplier_name                varchar(120) 供应商名
+        carrier                      varchar(40) 承运商
+   UK   tracking_no                  varchar(64) 运单号
+        expected_arrival             date 预计到达
+        status                       varchar(16) 物流状态
+        delayed                      boolean 是否延迟
+        remark                       varchar(300) 备注
+
+【logistics_events】物流轨迹节点 · logistics_events  字段 6
+   PK   id                           varchar(24) 节点ID
+   FK   logistics_id                 varchar(16) 物流单ID
+        time                         timestamptz 节点时间
+        node                         varchar(40) 节点名称
+        desc                         varchar(300) 节点说明
+        location                     varchar(80) 所在位置
+
+###### 分组: 系统与审计
+
+【users】用户与角色 · users  字段 5
+   PK   id                           varchar(16) 用户ID
+        name                         varchar(50) 姓名
+        role                         varchar(16) 角色
+        department                   varchar(50) 部门
+        created_at                   timestamptz 创建时间
+
+【system_configs】业务规则参数 · system_configs  字段 6
+   PK   id                           varchar(32) 参数键
+        label                        varchar(80) 参数名称
+        config_value                 varchar(200) 参数值
+        value_type                   varchar(16) 值类型
+   FK   updated_by                   varchar(16) 修改人ID
+        updated_at                   timestamptz 修改时间
+
+【operation_logs】操作日志 · operation_logs  字段 8
+   PK   id                           
+   FK   user_id                      varchar(16) 操作人ID
+        module                       varchar(32) 业务模块
+        action                       varchar(32) 操作动作
+        target_type                  varchar(32) 对象类型
+        target_id                    varchar(32) 对象ID
+        detail                       jsonb 变更详情
+        created_at                   timestamptz 操作时间
+
+###### 分组: AI 智能中心
+
+【ai_conversations】AI 会话 · ai_conversations  字段 5
+   PK   id                           varchar(16) 会话ID
+   FK   user_id                      varchar(16) 用户ID
+        title                        varchar(120) 会话标题
+        created_at                   timestamptz 创建时间
+        updated_at                   timestamptz 更新时间
+
+【ai_messages】AI 消息 · ai_messages  字段 13
+   PK   id                           varchar(32) 消息ID
+   FK   conversation_id              varchar(16) 会话ID
+        role                         varchar(12) 说话方
+        content                      text 消息内容
+        conclusion                   text 结论
+        evidence                     jsonb 数据依据
+        cause                        text 原因分析
+        actions                      jsonb 建议动作
+        draft_payload                jsonb 采购草稿
+        tool_calls                   jsonb 工具调用
+   FK   task_id                      varchar(16) 关联任务
+   FK   report_id                    varchar(16) 关联报告
+        created_at                   timestamptz 发送时间
+
+【ai_tasks】Agent 任务 · ai_tasks  字段 11
+   PK   id                           varchar(16) 任务ID
+        name                         varchar(120) 任务名称
+        type                         varchar(24) 任务类型
+        status                       varchar(20) 任务状态
+   FK   created_by                   varchar(16) 创建人ID
+        summary                      varchar(500) 任务摘要
+        payload                      jsonb 草稿载荷
+        tool_calls                   jsonb 工具调用
+        result_text                  text 结果说明
+        error                        varchar(500) 失败原因
+        created_at                   timestamptz 创建时间
+
+【ai_reports】AI 分析报告 · ai_reports  字段 11
+   PK   id                           varchar(16) 报告ID
+        type                         varchar(24) 报告类型
+        title                        varchar(160) 报告标题
+        target_id                    varchar(32) 分析对象ID
+        target_name                  varchar(120) 分析对象
+        conclusion                   text 结论
+        evidence                     jsonb 数据依据
+        cause                        text 原因分析
+        suggestions                  jsonb 建议清单
+   FK   created_by                   varchar(16) 生成人ID
+        created_at                   
+
+========================================================================
+关系：
+  warehouse_stock            -> products                    在库商品
+  warehouse_stock            -> warehouses                  所在仓
+  inventory_transactions     -> products                    商品
+  inventory_transactions     -> warehouses                  仓库
+  stock_transfers            -> warehouses                  调出仓
+  stock_transfers            -> warehouses                  调入仓
+  stock_transfers            -> products                    调拨商品
+  purchase_orders            -> suppliers                   下单给
+  purchase_orders            -> users                       创建
+  purchase_orders            -> users                       审批（须≠创建人）
+  purchase_order_items       -> purchase_orders             明细
+  purchase_order_items       -> products                    采购商品
+  logistics_orders           -> purchase_orders             发运
+  logistics_orders           -> suppliers                   发货方
+  logistics_events           -> logistics_orders            轨迹
+  ai_conversations           -> users                       发起人
+  ai_messages                -> ai_conversations            所属会话
+  ai_messages                -> ai_tasks                    关联任务
+  ai_messages                -> ai_reports                  关联报告
+  ai_tasks                   -> users                       创建人
+  ai_reports                 -> users                       生成人
+  system_configs             -> users                       最后修改
+  operation_logs             -> users                       操作人

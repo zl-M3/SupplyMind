@@ -1,0 +1,31 @@
+# frontend/dify — Dify AI 助手应用定义
+
+右下角「AI 小助手」对接的外部 Dify 应用导出文件，放在这里便于随仓库一起带走、在团队里复现。
+
+| 文件 | 说明 |
+|---|---|
+| `supplier-quote-eval.dsl.yml` | Dify 工作流导出（应用名「供应商报价评估」）。上传报价单 → 三类基准对比 + 品类质量档位 + 二维判定 + 模型归因与议价策略。**不含任何密钥**，可安全提交 |
+| `供应商报价评估_搭建手册.md` | 这个应用在 Dify 里怎么搭出来的图文说明 |
+| `测试报价单.csv` | 喂给工作流做联调用的样例报价单 |
+
+## 一、怎么把它导入到你自己的 Dify
+
+1. 打开你自己的 Dify（自建或云端）→ 右上角「创建应用」→ 选择 **「导入 DSL 文件」**
+2. 选 `supplier-quote-eval.dsl.yml`，等待导入完成
+3. 导入后点「发布」，再到「访问 API」页复制 **API Key**
+
+## 二、怎么和本项目连起来
+
+后端通过 `backend/.env` 的三个变量对接（**已 `gitignore`，不进库**）：
+
+```ini
+DIFY_ENABLED=true                 # 先确认你有自己的 Dify 再打开
+DIFY_API_BASE=http://你的-Dify-地址   # 例: http://192.168.x.x 或 https://api.dify.ai
+DIFY_API_KEY=app-xxxxxxxxxxxx     # 上一步复制的 Key
+```
+
+改完重启后端（`python run.py`）即可。前端 `src/services/aiAssistant.ts` 会经后端 `/api/v1/ai/dify/*` 调用它。
+
+> 原项目里 `DIFY_API_BASE` 指向别人电脑 VMware 里的 `192.168.88.100`，换机器后连不上，
+> 因此新仓库默认 `DIFY_ENABLED=false`：此时 AI 小助手走前端本地降级逻辑，其余功能不受影响。
+> 想真正用上 Dify，按上面两步换成你自己的地址和 Key 即可。

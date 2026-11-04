@@ -1,0 +1,12 @@
+onlyBuiltDependencies:
+  - esbuild
+nodeLinker: hoisted
+shamefullyHoist: true
+strictPeerDependencies: false
+autoInstallPeers: true
+# pnpm 11.28+ 会在 pnpm run 前做一次「供应链策略校验 + 隐式安装」，
+# 每次都要联网几十秒。本仓库的依赖已锁定并已安装，关掉它让 dev/build 秒开。
+verifyDepsBeforeRun: false
+allowBuilds:
+  # esbuild 需要跑 postinstall 装平台二进制（vite 依赖它）
+  esbuild: true
